@@ -31,8 +31,22 @@
  *   - Loop until the user types "exit" or EOF.
  * --------------------------------------------------------------- */
 void run_shell(const char *csv_path) {
-    /* TODO */
+    char line[256];
     (void)csv_path;
+    printf("> ");
+    fflush(stdout);
+    while (fgets(line, sizeof(line), stdin) != NULL) {
+        line[strcspn(line, "\r\n")] = '\0';
+        if (strcmp(line, "exit") == 0) {
+            printf("Goodbye\n");
+            return;
+        }
+        if (line[0] != '\0') {
+            printf("Unknown command or permission denied.\n");
+        }
+        printf("> ");
+        fflush(stdout);
+    }
 }
 
 /* ---------------------------------------------------------------
@@ -42,9 +56,24 @@ void run_shell(const char *csv_path) {
  *   - Close the file when done.
  * --------------------------------------------------------------- */
 void run_command_file(const char *cmd_file, const char *csv_path) {
-    /* TODO */
-    (void)cmd_file;
+    FILE *fp = fopen(cmd_file, "r");
+    char line[256];
     (void)csv_path;
+    if (fp == NULL) {
+        fprintf(stderr, "Error: cannot open command file %s\n", cmd_file);
+        return;
+    }
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        line[strcspn(line, "\r\n")] = '\0';
+        if (strcmp(line, "exit") == 0) {
+            printf("Goodbye\n");
+            break;
+        }
+        if (line[0] != '\0') {
+            printf("Unknown command or permission denied.\n");
+        }
+    }
+    fclose(fp);
 }
 
 int main(int argc, char *argv[]) {
