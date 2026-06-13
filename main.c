@@ -31,22 +31,20 @@
  *   - Loop until the user types "exit" or EOF.
  * --------------------------------------------------------------- */
 void run_shell(const char *csv_path) {
-    char line[256];
-    (void)csv_path;
-    printf("> ");
-    fflush(stdout);
-    while (fgets(line, sizeof(line), stdin) != NULL) {
-        line[strcspn(line, "\r\n")] = '\0';
-        if (strcmp(line, "exit") == 0) {
-            printf("Goodbye\n");
-            return;
-        }
-        if (line[0] != '\0') {
-            printf("Unknown command or permission denied.\n");
-        }
-        printf("> ");
-        fflush(stdout);
+#ifdef ADMIN_MODE
+    printf("[Admin Program]\n");
+#elif defined(CLIENT_MODE)
+    printf("[Client Program]\n");
+#endif
+
+    Student *head = NULL;
+    int n = load_students(csv_path, &head);
+    if (n < 0) {
+        return;
     }
+    printf("Loaded %d students from %s.\n", n, csv_path);
+
+    list_free(&head);
 }
 
 /* ---------------------------------------------------------------
