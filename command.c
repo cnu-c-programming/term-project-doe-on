@@ -48,6 +48,8 @@ static void print_error(ShellResult r, int line_number) {
 static ShellResult handle_find(char *args, Student **head);
 static ShellResult handle_list(char *args, Student **head);
 static ShellResult handle_stats(char *args, Student **head);
+static ShellResult handle_help(char *args, Student **head);
+static ShellResult handle_clear(char *args, Student **head);
 static ShellResult handle_exit(char *args, Student **head);
 
 #ifdef ADMIN_MODE
@@ -55,6 +57,8 @@ static const Command commands[] = {
     {"find",  handle_find,  "find <id>", "Find student by ID"},
     {"list",  handle_list,  "list",      "List all students"},
     {"stats", handle_stats, "stats",     "Show statistics"},
+    {"help",  handle_help,  "help",      "Show help"},
+    {"clear", handle_clear, "clear",     "Clear screen"},
     {"exit",  handle_exit,  "exit",      "Exit program"},
 };
 #elif defined(CLIENT_MODE)
@@ -62,6 +66,8 @@ static const Command commands[] = {
     {"find",  handle_find,  "find <id>", "Find student by ID"},
     {"list",  handle_list,  "list",      "List all students"},
     {"stats", handle_stats, "stats",     "Show statistics"},
+    {"help",  handle_help,  "help",      "Show help"},
+    {"clear", handle_clear, "clear",     "Clear screen"},
     {"exit",  handle_exit,  "exit",      "Exit program"},
 };
 #endif
@@ -121,6 +127,23 @@ static ShellResult handle_stats(char *args, Student **head) {
     printf("Average: %.1f\n", (double)sum / count);
     printf("Max: %d\n", max);
     printf("Min: %d\n", min);
+    return SHELL_OK;
+}
+
+static ShellResult handle_help(char *args, Student **head) {
+    (void)args;
+    (void)head;
+    printf("Commands:\n");
+    for (int i = 0; i < num_commands; i++) {
+        printf("  %-26s %s\n", commands[i].usage, commands[i].description);
+    }
+    return SHELL_OK;
+}
+
+static ShellResult handle_clear(char *args, Student **head) {
+    (void)args;
+    (void)head;
+    printf("\033[2J\033[H");
     return SHELL_OK;
 }
 
