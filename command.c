@@ -4,6 +4,10 @@
 #include "command.h"
 
 static char g_csv_path[256] = "students.csv";
+#ifdef ADMIN_MODE
+
+static int g_dirty = 0;
+#endif
 
 void command_set_csv_path(const char *path) {
     if (path != NULL) {
@@ -51,9 +55,13 @@ static ShellResult handle_stats(char *args, Student **head);
 static ShellResult handle_help(char *args, Student **head);
 static ShellResult handle_clear(char *args, Student **head);
 static ShellResult handle_exit(char *args, Student **head);
+#ifdef ADMIN_MODE
+static ShellResult handle_add(char *args, Student **head);
+#endif
 
 #ifdef ADMIN_MODE
 static const Command commands[] = {
+    {"add",   handle_add,   "add <id> <name> <score>", "Add a student"},
     {"find",  handle_find,  "find <id>", "Find student by ID"},
     {"list",  handle_list,  "list",      "List all students"},
     {"stats", handle_stats, "stats",     "Show statistics"},
@@ -153,6 +161,38 @@ static ShellResult handle_exit(char *args, Student **head) {
     printf("Goodbye.\n");
     return SHELL_EXIT;
 }
+
+#ifdef ADMIN_MODE
+static ShellResult handle_add(char *args, Student **head) {
+    char *id_s = strtok(args, " \t");
+    char *name_s = strtok(NULL, " \t");
+    char *score_s = strtok(NULL, " \t");
+    if (id_s == NULL || name_s == NULL || score_s == NULL) {
+        return SHELL_ERR_MISSING_ARGUMENT;
+    }
+    int id, score;
+    if (!parse_int(id_s, &id) || id <= 0) {
+        return SHELL_ERR_INVALID_ARGUMENT;
+    }
+    if (name_s[0] == '\0' || strchr(name_s, ',') != NULL) {
+        return SHELL_ERR_INVALID_ARGUMENT;
+    }
+    if (!parse_int(score_s, &score) || score < 0 || score > 100) {
+        return SHELL_ERR_INVALID_SCORE;
+    }
+    if (list_find(*head, id) != NULL) {
+        return SHELL_ERR_DUPLICATE_STUDENT;
+    }
+    Student *s = student_create(id, name_s, score);
+    if (s == NULL) {
+        return SHELL_ERR_INVALID_ARGUMENT;
+    }
+    list_append(head, s);
+    g_dirty = 1;
+    printf("Student added.\n");
+    return SHELL_OK;
+}
+#endif
 
 ShellResult command_execute(char *line, Student **head, int line_number) {
     char *cmd = strtok(line, " \t");
