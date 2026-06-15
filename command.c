@@ -12,6 +12,19 @@ void command_set_csv_path(const char *path) {
     }
 }
 
+static int parse_int(const char *s, int *out) {
+    if (s == NULL || *s == '\0') {
+        return 0;
+    }
+    char *end;
+    long v = strtol(s, &end, 10);
+    if (*end != '\0') {
+        return 0;
+    }
+    *out = (int)v;
+    return 1;
+}
+
 static void print_error(ShellResult r, int line_number) {
     const char *msg;
     switch (r) {
@@ -32,21 +45,46 @@ static void print_error(ShellResult r, int line_number) {
     }
 }
 
+static ShellResult handle_find(char *args, Student **head);
 static ShellResult handle_list(char *args, Student **head);
+static ShellResult handle_stats(char *args, Student **head);
 static ShellResult handle_exit(char *args, Student **head);
 
 #ifdef ADMIN_MODE
 static const Command commands[] = {
-    {"list", handle_list, "list", "List all students"},
-    {"exit", handle_exit, "exit", "Exit program"},
+    {"find",  handle_find,  "find <id>", "Find student by ID"},
+    {"list",  handle_list,  "list",      "List all students"},
+    {"stats", handle_stats, "stats",     "Show statistics"},
+    {"exit",  handle_exit,  "exit",      "Exit program"},
 };
 #elif defined(CLIENT_MODE)
 static const Command commands[] = {
-    {"list", handle_list, "list", "List all students"},
-    {"exit", handle_exit, "exit", "Exit program"},
+    {"find",  handle_find,  "find <id>", "Find student by ID"},
+    {"list",  handle_list,  "list",      "List all students"},
+    {"stats", handle_stats, "stats",     "Show statistics"},
+    {"exit",  handle_exit,  "exit",      "Exit program"},
 };
 #endif
 static const int num_commands = (int)(sizeof(commands) / sizeof(commands[0]));
+
+static ShellResult handle_find(char *args, Student **head) {
+    char *id_s = strtok(args, " \t");
+    if (id_s == NULL) {
+        return SHELL_ERR_MISSING_ARGUMENT;
+    }
+    int id;
+    if (!parse_int(id_s, &id) || id <= 0) {
+        return SHELL_ERR_INVALID_ARGUMENT;
+    }
+    Student *s = list_find(*head, id);
+    if (s == NULL) {
+        return SHELL_ERR_STUDENT_NOT_FOUND;
+    }
+    printf("ID: %d\n", s->id);
+    printf("Name: %s\n", s->name);
+    printf("Score: %d\n", s->score);
+    return SHELL_OK;
+}
 
 static ShellResult handle_list(char *args, Student **head) {
     (void)args;
@@ -58,6 +96,31 @@ static ShellResult handle_list(char *args, Student **head) {
     for (Student *cur = *head; cur != NULL; cur = cur->next) {
         printf("%d\t%s\t%d\n", cur->id, cur->name, cur->score);
     }
+    return SHELL_OK;
+}
+
+static ShellResult handle_stats(char *args, Student **head) {
+    (void)args;
+    if (*head == NULL) {
+        printf("No student data available.\n");
+        return SHELL_OK;
+    }
+    int count = 0, sum = 0, max = 0, min = 0, first = 1;
+    for (Student *cur = *head; cur != NULL; cur = cur->next) {
+        count++;
+        sum += cur->score;
+        if (first || cur->score > max) {
+            max = cur->score;
+        }
+        if (first || cur->score < min) {
+            min = cur->score;
+        }
+        first = 0;
+    }
+    printf("Count: %d\n", count);
+    printf("Average: %.1f\n", (double)sum / count);
+    printf("Max: %d\n", max);
+    printf("Min: %d\n", min);
     return SHELL_OK;
 }
 
