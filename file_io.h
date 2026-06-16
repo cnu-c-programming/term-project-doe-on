@@ -5,5 +5,6 @@
 
 int load_students(const char *path, Student **head);
 
-#endif
+int save_students(const char *path, Student *head);
 
+#endif
