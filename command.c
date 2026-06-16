@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "command.h"
+#include "file_io.h"
 
 static char g_csv_path[256] = "students.csv";
 #ifdef ADMIN_MODE
@@ -49,6 +50,7 @@ static void print_error(ShellResult r, int line_number) {
     }
 }
 
+static ShellResult handle_reload(char *args, Student **head);
 static ShellResult handle_find(char *args, Student **head);
 static ShellResult handle_list(char *args, Student **head);
 static ShellResult handle_stats(char *args, Student **head);
@@ -56,6 +58,7 @@ static ShellResult handle_help(char *args, Student **head);
 static ShellResult handle_clear(char *args, Student **head);
 static ShellResult handle_exit(char *args, Student **head);
 #ifdef ADMIN_MODE
+static ShellResult handle_save(char *args, Student **head);
 static ShellResult handle_add(char *args, Student **head);
 static ShellResult handle_delete(char *args, Student **head);
 static ShellResult handle_update(char *args, Student **head);
@@ -63,6 +66,8 @@ static ShellResult handle_update(char *args, Student **head);
 
 #ifdef ADMIN_MODE
 static const Command commands[] = {
+    {"save",   handle_save,   "save",                    "Save students to CSV"},
+    {"reload", handle_reload, "reload",                  "Reload students from CSV"},
     {"add",    handle_add,    "add <id> <name> <score>", "Add a student"},
     {"delete", handle_delete, "delete <id>",             "Delete a student"},
     {"update", handle_update, "update <id> <score>",     "Update student score"},
@@ -75,6 +80,7 @@ static const Command commands[] = {
 };
 #elif defined(CLIENT_MODE)
 static const Command commands[] = {
+    {"reload", handle_reload, "reload",    "Reload students from CSV"},
     {"find",   handle_find,   "find <id>", "Find student by ID"},
     {"list",   handle_list,   "list",      "List all students"},
     {"stats",  handle_stats,  "stats",     "Show statistics"},
@@ -84,6 +90,19 @@ static const Command commands[] = {
 };
 #endif
 static const int num_commands = (int)(sizeof(commands) / sizeof(commands[0]));
+
+static ShellResult handle_reload(char *args, Student **head) {
+    (void)args;
+    int n = load_students(g_csv_path, head);
+    if (n < 0) {
+        return SHELL_ERR_FILE_OPEN;
+    }
+#ifdef ADMIN_MODE
+    g_dirty = 0;
+#endif
+    printf("Reloaded %d students from %s.\n", n, g_csv_path);
+    return SHELL_OK;
+}
 
 static ShellResult handle_find(char *args, Student **head) {
     char *id_s = strtok(args, " \t");
@@ -167,6 +186,17 @@ static ShellResult handle_exit(char *args, Student **head) {
 }
 
 #ifdef ADMIN_MODE
+static ShellResult handle_save(char *args, Student **head) {
+    (void)args;
+    int n = save_students(g_csv_path, *head);
+    if (n < 0) {
+        return SHELL_ERR_FILE_WRITE;
+    }
+    g_dirty = 0;
+    printf("Saved %d students to %s.\n", n, g_csv_path);
+    return SHELL_OK;
+}
+
 static ShellResult handle_add(char *args, Student **head) {
     char *id_s = strtok(args, " \t");
     char *name_s = strtok(NULL, " \t");
