@@ -57,26 +57,30 @@ static ShellResult handle_clear(char *args, Student **head);
 static ShellResult handle_exit(char *args, Student **head);
 #ifdef ADMIN_MODE
 static ShellResult handle_add(char *args, Student **head);
+static ShellResult handle_delete(char *args, Student **head);
+static ShellResult handle_update(char *args, Student **head);
 #endif
 
 #ifdef ADMIN_MODE
 static const Command commands[] = {
-    {"add",   handle_add,   "add <id> <name> <score>", "Add a student"},
-    {"find",  handle_find,  "find <id>", "Find student by ID"},
-    {"list",  handle_list,  "list",      "List all students"},
-    {"stats", handle_stats, "stats",     "Show statistics"},
-    {"help",  handle_help,  "help",      "Show help"},
-    {"clear", handle_clear, "clear",     "Clear screen"},
-    {"exit",  handle_exit,  "exit",      "Exit program"},
+    {"add",    handle_add,    "add <id> <name> <score>", "Add a student"},
+    {"delete", handle_delete, "delete <id>",             "Delete a student"},
+    {"update", handle_update, "update <id> <score>",     "Update student score"},
+    {"find",   handle_find,   "find <id>", "Find student by ID"},
+    {"list",   handle_list,   "list",      "List all students"},
+    {"stats",  handle_stats,  "stats",     "Show statistics"},
+    {"help",   handle_help,   "help",      "Show help"},
+    {"clear",  handle_clear,  "clear",     "Clear screen"},
+    {"exit",   handle_exit,   "exit",      "Exit program"},
 };
 #elif defined(CLIENT_MODE)
 static const Command commands[] = {
-    {"find",  handle_find,  "find <id>", "Find student by ID"},
-    {"list",  handle_list,  "list",      "List all students"},
-    {"stats", handle_stats, "stats",     "Show statistics"},
-    {"help",  handle_help,  "help",      "Show help"},
-    {"clear", handle_clear, "clear",     "Clear screen"},
-    {"exit",  handle_exit,  "exit",      "Exit program"},
+    {"find",   handle_find,   "find <id>", "Find student by ID"},
+    {"list",   handle_list,   "list",      "List all students"},
+    {"stats",  handle_stats,  "stats",     "Show statistics"},
+    {"help",   handle_help,   "help",      "Show help"},
+    {"clear",  handle_clear,  "clear",     "Clear screen"},
+    {"exit",   handle_exit,   "exit",      "Exit program"},
 };
 #endif
 static const int num_commands = (int)(sizeof(commands) / sizeof(commands[0]));
@@ -190,6 +194,46 @@ static ShellResult handle_add(char *args, Student **head) {
     list_append(head, s);
     g_dirty = 1;
     printf("Student added.\n");
+    return SHELL_OK;
+}
+
+static ShellResult handle_delete(char *args, Student **head) {
+    char *id_s = strtok(args, " \t");
+    if (id_s == NULL) {
+        return SHELL_ERR_MISSING_ARGUMENT;
+    }
+    int id;
+    if (!parse_int(id_s, &id) || id <= 0) {
+        return SHELL_ERR_INVALID_ARGUMENT;
+    }
+    if (!list_delete(head, id)) {
+        return SHELL_ERR_STUDENT_NOT_FOUND;
+    }
+    g_dirty = 1;
+    printf("Student deleted.\n");
+    return SHELL_OK;
+}
+
+static ShellResult handle_update(char *args, Student **head) {
+    char *id_s = strtok(args, " \t");
+    char *score_s = strtok(NULL, " \t");
+    if (id_s == NULL || score_s == NULL) {
+        return SHELL_ERR_MISSING_ARGUMENT;
+    }
+    int id, score;
+    if (!parse_int(id_s, &id) || id <= 0) {
+        return SHELL_ERR_INVALID_ARGUMENT;
+    }
+    if (!parse_int(score_s, &score) || score < 0 || score > 100) {
+        return SHELL_ERR_INVALID_SCORE;
+    }
+    Student *s = list_find(*head, id);
+    if (s == NULL) {
+        return SHELL_ERR_STUDENT_NOT_FOUND;
+    }
+    s->score = score;
+    g_dirty = 1;
+    printf("Student updated.\n");
     return SHELL_OK;
 }
 #endif
