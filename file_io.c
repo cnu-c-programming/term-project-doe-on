@@ -50,3 +50,21 @@ int load_students(const char *path, Student **head) {
     fclose(fp);
     return count;
 }
+
+int save_students(const char *path, Student *head) {
+    FILE *fp = fopen(path, "w");
+    if (fp == NULL) {
+        fprintf(stderr, "Error: cannot write file '%s'.\n", path);
+        return -1;
+    }
+
+    fprintf(fp, "id,name,score\n");
+    int count = 0;
+    for (Student *cur = head; cur != NULL; cur = cur->next) {
+        fprintf(fp, "%d,%s,%d\n", cur->id, cur->name, cur->score);
+        count++;
+    }
+
+    fclose(fp);
+    return count;
+}
