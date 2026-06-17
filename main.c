@@ -23,6 +23,14 @@
 #include "file_io.h"
 #include "command.h"
 
+static void print_usage(void) {
+#ifdef ADMIN_MODE
+    printf("Usage: ./admin_shell <csv_file> [-f command_file]\n");
+#elif defined(CLIENT_MODE)
+    printf("Usage: ./client_shell <csv_file> [-f command_file]\n");
+#endif
+}
+
 /* ---------------------------------------------------------------
  * TODO: Implement the interactive shell loop.
  *   - Print a prompt and read a line from stdin.
@@ -92,6 +100,11 @@ int main(int argc, char *argv[]) {
     const char *csv_path  = "students.csv"; /* default CSV file */
     const char *cmd_file  = NULL;           /* -f <file> argument */
 
+    if (argc < 2) {
+        print_usage();
+        return 1;
+    }
+
     /* TODO: Parse command-line arguments.
      *   Supported flags:
      *     -f <file>   run commands from <file> instead of stdin
@@ -108,8 +121,13 @@ int main(int argc, char *argv[]) {
      *   }
      */
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-f") == 0 && i + 1 < argc) {
-            cmd_file = argv[++i];
+        if (strcmp(argv[i], "-f") == 0) {
+            if (i + 1 < argc) {
+                cmd_file = argv[++i];
+            } else {
+                print_usage();
+                return 1;
+            }
         } else {
             csv_path = argv[i];
         }
