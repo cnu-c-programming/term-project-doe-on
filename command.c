@@ -62,6 +62,7 @@ static ShellResult handle_save(char *args, Student **head);
 static ShellResult handle_add(char *args, Student **head);
 static ShellResult handle_delete(char *args, Student **head);
 static ShellResult handle_update(char *args, Student **head);
+static ShellResult handle_sort(char *args, Student **head);
 #endif
 
 #ifdef ADMIN_MODE
@@ -74,6 +75,7 @@ static const Command commands[] = {
     {"find",   handle_find,   "find <id>", "Find student by ID"},
     {"list",   handle_list,   "list",      "List all students"},
     {"stats",  handle_stats,  "stats",     "Show statistics"},
+    {"sort",   handle_sort,   "sort <name|score>", "Sort students (bonus)"},
     {"help",   handle_help,   "help",      "Show help"},
     {"clear",  handle_clear,  "clear",     "Clear screen"},
     {"exit",   handle_exit,   "exit",      "Exit program"},
@@ -181,6 +183,11 @@ static ShellResult handle_clear(char *args, Student **head) {
 static ShellResult handle_exit(char *args, Student **head) {
     (void)args;
     (void)head;
+#ifdef ADMIN_MODE
+    if (g_dirty) {
+        printf("Warning: you have unsaved changes.\n");
+    }
+#endif
     printf("Goodbye.\n");
     return SHELL_EXIT;
 }
@@ -265,6 +272,26 @@ static ShellResult handle_update(char *args, Student **head) {
     g_dirty = 1;
     printf("Student updated.\n");
     return SHELL_OK;
+}
+
+static ShellResult handle_sort(char *args, Student **head) {
+    char *key = strtok(args, " \t");
+    if (key == NULL) {
+        return SHELL_ERR_MISSING_ARGUMENT;
+    }
+    if (strcmp(key, "name") == 0) {
+        list_sort_by_name(head);
+        g_dirty = 1;
+        printf("Students sorted by name.\n");
+        return SHELL_OK;
+    }
+    if (strcmp(key, "score") == 0) {
+        list_sort_by_score(head);
+        g_dirty = 1;
+        printf("Students sorted by score.\n");
+        return SHELL_OK;
+    }
+    return SHELL_ERR_INVALID_ARGUMENT;
 }
 #endif
 
