@@ -82,3 +82,50 @@ void list_free(Student **head) {
     }
     *head = NULL;
 }
+
+static void swap_records(Student *a, Student *b) {
+    int tmp_id = a->id;
+    int tmp_score = a->score;
+    char tmp_name[32];
+    strcpy(tmp_name, a->name);
+
+    a->id = b->id;
+    a->score = b->score;
+    strcpy(a->name, b->name);
+
+    b->id = tmp_id;
+    b->score = tmp_score;
+    strcpy(b->name, tmp_name);
+}
+
+void list_sort_by_name(Student **head) {
+    if (head == NULL || *head == NULL) {
+        return;
+    }
+    int swapped;
+    do {
+        swapped = 0;
+        for (Student *cur = *head; cur->next != NULL; cur = cur->next) {
+            if (strcmp(cur->name, cur->next->name) > 0) {
+                swap_records(cur, cur->next);
+                swapped = 1;
+            }
+        }
+    } while (swapped);
+}
+
+void list_sort_by_score(Student **head) {
+    if (head == NULL || *head == NULL) {
+        return;
+    }
+    int swapped;
+    do {
+        swapped = 0;
+        for (Student *cur = *head; cur->next != NULL; cur = cur->next) {
+            if (cur->score > cur->next->score) {
+                swap_records(cur, cur->next);
+                swapped = 1;
+            }
+        }
+    } while (swapped);
+}
