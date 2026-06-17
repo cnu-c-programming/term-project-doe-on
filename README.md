@@ -74,14 +74,18 @@ exit
 
 ```
 student/
-├── main.c       - 프로그램 진입점 (구현 필요)
-├── Makefile     - 빌드 자동화
-├── grader.py    - 제출 전 기능 확인용 채점 스크립트
-├── grader.md    - grader 사용법
-└── expected/    - 채점 기준 CSV 파일 모음
+├── main.c
+├── student.h
+├── student.c
+├── file_io.h
+├── file_io.c
+├── command.h
+├── command.c
+├── Makefile
+├── README.md
+└── students.csv
 ```
 
-> 자세한 과제 명세는 배포된 `term_project_description.docx` 를 참고하세요.
 
 ## 제출 전 기능 확인
 
