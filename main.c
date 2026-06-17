@@ -31,6 +31,14 @@ static void print_usage(void) {
 #endif
 }
 
+static void print_banner(void) {
+#ifdef ADMIN_MODE
+    printf("[Admin Program]\n");
+#elif defined(CLIENT_MODE)
+    printf("[Client Program]\n");
+#endif
+}
+
 /* ---------------------------------------------------------------
  * TODO: Implement the interactive shell loop.
  *   - Print a prompt and read a line from stdin.
@@ -39,11 +47,7 @@ static void print_usage(void) {
  *   - Loop until the user types "exit" or EOF.
  * --------------------------------------------------------------- */
 void run_shell(const char *csv_path) {
-#ifdef ADMIN_MODE
-    printf("[Admin Program]\n");
-#elif defined(CLIENT_MODE)
-    printf("[Client Program]\n");
-#endif
+    print_banner();
 
     Student *head = NULL;
     command_set_csv_path(csv_path);
@@ -91,9 +95,49 @@ void run_shell(const char *csv_path) {
  *   - Close the file when done.
  * --------------------------------------------------------------- */
 void run_command_file(const char *cmd_file, const char *csv_path) {
-    /* TODO */
-    (void)cmd_file;
-    (void)csv_path;
+    print_banner();
+
+    Student *head = NULL;
+    command_set_csv_path(csv_path);
+    int n = load_students(csv_path, &head);
+    if (n < 0) {
+        return;
+    }
+    printf("Loaded %d students from %s.\n", n, csv_path);
+
+    FILE *fp = fopen(cmd_file, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "Error: cannot open command file '%s'.\n", cmd_file);
+        list_free(&head);
+        return;
+    }
+
+    char raw[256];
+    int cmd_no = 0;
+    while (fgets(raw, sizeof(raw), fp) != NULL) {
+        raw[strcspn(raw, "\r\n")] = '\0';
+
+        char *p = raw;
+        while (*p == ' ' || *p == '\t') {
+            p++;
+        }
+        if (*p == '\0' || *p == '#') {
+            continue;
+        }
+
+        cmd_no++;
+        printf("[command file:%d] %s\n", cmd_no, p);
+
+        char exec[256];
+        strncpy(exec, p, sizeof(exec) - 1);
+        exec[sizeof(exec) - 1] = '\0';
+        if (command_execute(exec, &head, cmd_no) == SHELL_EXIT) {
+            break;
+        }
+    }
+
+    fclose(fp);
+    list_free(&head);
 }
 
 int main(int argc, char *argv[]) {
