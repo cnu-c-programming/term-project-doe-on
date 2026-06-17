@@ -20,4 +20,8 @@ int list_delete(Student **head, int id);
 
 void list_free(Student **head);
 
+void list_sort_by_name(Student **head);
+
+void list_sort_by_score(Student **head);
+
 #endif
