@@ -10,18 +10,26 @@ int load_students(const char *path, Student **head) {
         return -1;
     }
 
+    char line[256];
+    if (fgets(line, sizeof(line), fp) == NULL) {
+        fprintf(stderr, "Error: invalid CSV header.\n");
+        fclose(fp);
+        return -1;
+    }
+    line[strcspn(line, "\r\n")] = '\0';
+    if (strcmp(line, "id,name,score") != 0) {
+        fprintf(stderr, "Error: invalid CSV header.\n");
+        fclose(fp);
+        return -1;
+    }
+
     list_free(head);
 
-    char line[256];
     int count = 0;
-    int is_header = 1;
+    int lineno = 1;
     while (fgets(line, sizeof(line), fp) != NULL) {
+        lineno++;
         line[strcspn(line, "\r\n")] = '\0';
-
-        if (is_header) {
-            is_header = 0;
-            continue;
-        }
         if (line[0] == '\0') {
             continue;
         }
@@ -29,17 +37,34 @@ int load_students(const char *path, Student **head) {
         char *comma1 = strchr(line, ',');
         char *comma2 = (comma1 != NULL) ? strchr(comma1 + 1, ',') : NULL;
         if (comma1 == NULL || comma2 == NULL) {
+            fprintf(stderr, "Error: invalid CSV format at line %d.\n", lineno);
             continue;
         }
         *comma1 = '\0';
         *comma2 = '\0';
-
-        int id = atoi(line);
+        const char *id_s = line;
         const char *name = comma1 + 1;
-        int score = atoi(comma2 + 1);
+        const char *score_s = comma2 + 1;
 
-        Student *s = student_create(id, name, score);
+        char *end;
+        long id = strtol(id_s, &end, 10);
+        if (*end != '\0' || id <= 0) {
+            fprintf(stderr, "Error: invalid id at line %d.\n", lineno);
+            continue;
+        }
+        long score = strtol(score_s, &end, 10);
+        if (*end != '\0' || score < 0 || score > 100) {
+            fprintf(stderr, "Error: invalid score at line %d.\n", lineno);
+            continue;
+        }
+        if (name[0] == '\0') {
+            fprintf(stderr, "Error: invalid name at line %d.\n", lineno);
+            continue;
+        }
+
+        Student *s = student_create((int)id, name, (int)score);
         if (s == NULL) {
+            fprintf(stderr, "Error: out of memory.\n");
             fclose(fp);
             return -1;
         }
